@@ -46,7 +46,22 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Perfect Clear**: dejar el tablero vacío da un bonus extra (800–2000 × nivel).
 - **Efectos**: popups sobre el tablero, shake, contador de combo en el HUD y sonidos sintetizados con WebAudio (tecla `M` o botón 🔊 para silenciar; se recuerda entre sesiones).
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
+- **Modo desafío**: menú inicial con Maratón + 5 desafíos con objetivo (ver abajo). Los completados se marcan con ✓ y guardan su mejor marca (`localStorage`). Power-ups activos en todos.
 - **Pausa** y **Game Over** con opción de reinicio.
+
+---
+
+## Modo desafío
+
+| Desafío    | Regla                                                    | Objetivo                           |
+| ---------- | -------------------------------------------------------- | ---------------------------------- |
+| Sprint 40  | Límite de 2:00                                           | 40 líneas (si no, `¡TIEMPO!`)      |
+| Basura     | Cada 10s sube una fila gris con un hueco (❄ la pausa)    | Sobrevivir 2:00                    |
+| Obstáculos | Tablero con bloques grises pre-colocados                 | Eliminar todos los grises          |
+| Invisible  | Las piezas se desvanecen al fijarse (se revela al final) | 20 líneas                          |
+| Al revés   | Empieza en nivel 5; desde el 6, `↑` rota antihorario y `←`/`→` se invierten | 30 líneas |
+
+Los desafíos viven en `CHALLENGES` (`game.js`); `STONE` es el bloque gris. El botón **Menú** del overlay (pausa / fin) vuelve a la selección.
 
 ---
 

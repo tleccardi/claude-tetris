@@ -38,6 +38,12 @@
           <span class="value" id="combo">–</span>
         </div>
 
+        <div id="goal-section" class="panel-section hidden">
+          <span class="label">OBJETIVO <span id="reverse-badge" class="badge hidden">⇄ INVERSO</span></span>
+          <span id="goal-text" class="goal-text"></span>
+          <span id="goal-timer" class="value"></span>
+        </div>
+
         <div class="panel-section">
           <span class="label">NEXT</span>
           <canvas id="next-canvas" width="120" height="120"></canvas>
@@ -74,6 +80,14 @@
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
         <button id="restart-btn">Reiniciar</button>
+        <button id="menu-btn" class="secondary-btn" type="button">Menú</button>
+      </div>
+    </div>
+
+    <div id="menu" class="overlay">
+      <div class="overlay-box menu-box">
+        <p class="menu-title">MODO DE JUEGO</p>
+        <div id="menu-list" class="menu-list"></div>
       </div>
     </div>
   </div>

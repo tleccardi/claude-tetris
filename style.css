@@ -12,6 +12,7 @@
   --kbd-text: #aaa;
   --overlay-bg: rgba(10, 10, 20, 0.75);
   --danger: #e57373;
+  --success: #81c784;
   --btn-text: #0f0f17;
   --shadow: rgba(0, 0, 0, 0.6);
 }
@@ -30,6 +31,7 @@
   --kbd-text: #333;
   --overlay-bg: rgba(255, 255, 255, 0.75);
   --danger: #c62828;
+  --success: #2e7d32;
   --btn-text: #ffffff;
   --shadow: rgba(0, 0, 0, 0.15);
 }
@@ -242,7 +244,7 @@ kbd {
   animation: combo-pulse 0.3s ease-out;
 }
 
-#b2b {
+#b2b, .badge {
   margin-left: 6px;
   padding: 1px 5px;
   border-radius: 3px;
@@ -300,4 +302,96 @@ kbd {
 #theme-toggle:focus-visible, #sound-toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* ---- Desafíos ---- */
+.goal-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#overlay-title.win {
+  color: var(--success);
+}
+
+.secondary-btn {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 8px 28px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.secondary-btn:hover {
+  border-color: var(--accent-hover);
+  color: var(--accent-hover);
+}
+
+.menu-box {
+  width: 100%;
+  max-width: 440px;
+  padding: 0 16px;
+}
+
+.menu-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--accent);
+}
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.menu-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  text-align: left;
+  background: var(--board-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.menu-item:hover, .menu-item:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.menu-item.done .menu-name {
+  color: var(--success);
+}
+
+.menu-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.menu-best {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: var(--accent);
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.menu-desc {
+  font-size: 11px;
+  color: var(--muted);
+  grid-column: 1 / -1;
 }
