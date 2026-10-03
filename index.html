@@ -8,6 +8,8 @@
   <script>
     try {
       if (localStorage.getItem('theme') === 'light') document.documentElement.dataset.theme = 'light';
+      const skin = localStorage.getItem('skin');
+      if (skin) document.documentElement.dataset.skin = skin;
     } catch (e) {}
   </script>
 </head>
@@ -57,6 +59,16 @@
         <div id="preview-section" class="panel-section hidden">
           <span class="label">PRÓXIMAS</span>
           <canvas id="preview-canvas" width="120" height="80"></canvas>
+        </div>
+
+        <div class="panel-section">
+          <label class="label" for="skin-select">SKIN</label>
+          <select id="skin-select">
+            <option value="retro">Retro</option>
+            <option value="neon">Neon</option>
+            <option value="pastel">Pastel</option>
+            <option value="pixel">Pixel art</option>
+          </select>
         </div>
 
         <div class="panel-section">

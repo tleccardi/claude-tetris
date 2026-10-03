@@ -52,6 +52,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Tabla de records local**: top 5 guardado en `localStorage` (`highscores`) con nombre, puntos, líneas y mejor combo de cada partida. Al terminar (victoria o derrota) y entrar en el top aparece un campo para el nombre (`Enter` o **Guardar**); la tabla se ve en la pantalla de inicio y en el game over, con la fila actual resaltada, más el mejor combo y las líneas máximas. El botón **Resetear records** pide confirmación (clic dos veces).
 - **Menú de pausa** (`P` o `Esc`): **Reanudar**, **Reiniciar** (sin recargar), **Ver controles** y **Nivel inicial** (1–10, se guarda en `localStorage` y aplica a la próxima partida; en desafíos rige el mayor entre ese y el del desafío). Mientras está abierto el juego ignora el teclado, y tras reanudar descarta las teclas que seguían apretadas. Navegación con `↑` `↓` + `Enter` (`←` `→` cambian el nivel).
 - **Game Over** con opción de reinicio.
+- **Skins**: selector SKIN en el panel lateral con 4 apariencias: Retro (por defecto), Neon (fondo negro y glow con `shadowBlur`), Pastel (colores suaves y esquinas redondeadas) y Pixel art (textura con dithering). Cambia al instante sin recargar, es independiente del modo claro/oscuro y se guarda en `localStorage` (`skin`). Cada skin define su paleta y su función de dibujo en `SKINS` (`game.js`).
 
 ---
 
