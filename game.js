@@ -52,7 +52,6 @@ const SKILLS = [
   { key: 'swap',    icon: '🔀', name: 'Cambiar pieza', desc: 'Cambia la pieza actual por otra del pool.' },
   { key: 'slow',    icon: '🐌', name: 'Ralentizar',    desc: 'Caída 2.5x más lenta durante 10s.' },
   { key: 'undo',    icon: '↩',  name: 'Deshacer',      desc: 'Revierte la última colocación.' },
-  { key: 'hold',    icon: '📦', name: 'Reservar',      desc: 'Guarda la pieza actual o la intercambia.' },
 ];
 
 const POWERUP_EVERY = 5;
@@ -135,7 +134,7 @@ let combo, b2bReady, lastRotate, popups, shownCombo;
 let modeKey = 'marathon', challenge = CHALLENGES.marathon;
 let menuOpen = true, won = false;
 let elapsedMs, garbageMs, fadeCells, fadeMs, reversed;
-let energy, slowMs, previewLeft, upcoming, held, undoSnapshot;
+let energy, slowMs, previewLeft, upcoming, held, canHold, undoSnapshot;
 let picking = false, pickerOptions = [], pickerBack = closePicker;
 let muted = false;
 let audioCtx = null;
@@ -421,6 +420,10 @@ const sfx = {
   skill() {
     [392, 587, 784].forEach((f, i) => tone(f, 110, 'sine', i * 70, 0.1));
   },
+  hold() {
+    tone(523, 80, 'triangle', 0, 0.08);
+    tone(392, 80, 'triangle', 60, 0.08);
+  },
 };
 
 function ensureAudio() {
@@ -548,6 +551,7 @@ function lockPiece() {
 
 function spawn() {
   lastRotate = false;
+  canHold = true;
   current = next;
   next = takeNext();
   refillUpcoming();
@@ -557,6 +561,7 @@ function spawn() {
   }
   drawNext();
   drawPreview();
+  drawHold();
 }
 
 // ---- Habilidades ----
@@ -656,8 +661,6 @@ function useSkill(key) {
     slowMs = SLOW_MS;
   } else if (key === 'undo') {
     ok = undoPlacement();
-  } else if (key === 'hold') {
-    ok = holdPiece();
   }
   finishSkill(ok, key);
 }
@@ -683,10 +686,13 @@ function replaceCurrent(piece) {
   return true;
 }
 
+// Reserva la pieza actual (o la intercambia); una vez por pieza
 function holdPiece() {
+  if (!canHold || !current) return false;
   if (!held) {
     held = freshCopy(current);
     spawn();
+    if (gameOver) return true;
   } else {
     if (collide(held.shape, held.x, held.y)) return false;
     const stored = freshCopy(current);
@@ -694,6 +700,9 @@ function holdPiece() {
     held = stored;
     lastRotate = false;
   }
+  canHold = false;
+  dropAccum = 0;
+  sfx.hold();
   drawHold();
   return true;
 }
@@ -711,11 +720,13 @@ function undoPlacement() {
   dropInterval = speedFor(level);
   if (challenge.reverseFrom) reversed = level >= challenge.reverseFrom;
   lastRotate = false;
+  canHold = true;
   fadeCells = [];
   fadeMs = 0;
   if (previewLeft > 0) previewLeft = Math.min(PREVIEW_COUNT, previewLeft + 1);
   drawNext();
   drawPreview();
+  drawHold();
   return true;
 }
 
@@ -997,9 +1008,9 @@ function drawPreview() {
 }
 
 function drawHold() {
-  holdSection.classList.toggle('hidden', !held);
-  if (!held) return;
+  holdSection.classList.toggle('locked', !canHold);
   holdCtx.clearRect(0, 0, holdCanvas.width, holdCanvas.height);
+  if (!held) return;
   drawPiece(holdCtx, held, (4 - held.shape[0].length) / 2, (4 - held.shape.length) / 2, 20);
 }
 
@@ -1104,6 +1115,7 @@ function init(key = modeKey) {
   previewLeft = 0;
   upcoming = [];
   held = null;
+  canHold = true;
   undoSnapshot = null;
   picking = false;
   pickerEl.classList.add('hidden');
@@ -1133,6 +1145,13 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyP') { togglePause(); return; }
   if (paused || gameOver) return;
   if (e.code === 'KeyE') { openSkillMenu(); return; }
+  if (e.code === 'KeyC' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+    if (!e.repeat && holdPiece()) {
+      updateHUD();
+      if (!gameOver) draw();
+    }
+    return;
+  }
   const dir = reversed ? -1 : 1; // controles invertidos
   switch (e.code) {
     case 'ArrowLeft':
@@ -1177,7 +1196,7 @@ function setTheme(name, persist = true) {
   if (board) draw();
   if (next) drawNext();
   if (upcoming) drawPreview();
-  if (held !== undefined) drawHold();
+  if (canHold !== undefined) drawHold();
 }
 
 themeToggle.addEventListener('click', () => {

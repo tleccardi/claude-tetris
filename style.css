@@ -439,6 +439,15 @@ kbd {
   border-radius: 4px;
 }
 
+#hold-canvas {
+  transition: opacity 0.15s;
+}
+
+#hold-section.locked #hold-canvas {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
 .pick-piece {
   grid-column: 2;
   grid-row: 1 / span 2;

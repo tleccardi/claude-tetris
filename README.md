@@ -47,7 +47,8 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Efectos**: popups sobre el tablero, shake, contador de combo en el HUD y sonidos sintetizados con WebAudio (tecla `M` o botón 🔊 para silenciar; se recuerda entre sesiones).
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
 - **Modo desafío**: menú inicial con Maratón + 5 desafíos con objetivo (ver abajo). Los completados se marcan con ✓ y guardan su mejor marca (`localStorage`). Power-ups activos en todos.
-- **Habilidades cargables**: cada línea limpiada suma energía (15 por línea, barra de 100). Con la barra llena, `E` (o el botón) abre un menú y se elige una habilidad (consume toda la barra): ver las siguientes 5 piezas, cambiar la pieza actual por una de 3 del pool, ralentizar la caída 10s, deshacer la última colocación o reservar (hold) la pieza. `Esc` vuelve atrás sin gastar energía.
+- **Habilidades cargables**: cada línea limpiada suma energía (15 por línea, barra de 100). Con la barra llena, `E` (o el botón) abre un menú y se elige una habilidad (consume toda la barra): ver las siguientes 5 piezas, cambiar la pieza actual por una de 3 del pool, ralentizar la caída 10s, o deshacer la última colocación. `Esc` vuelve atrás sin gastar energía.
+- **Hold**: `C` o `Shift` guarda la pieza actual en el slot HOLD (a la izquierda de NEXT); si ya hay una guardada, se intercambian. Solo una vez por pieza: el slot se atenúa hasta que la pieza actual se fija.
 - **Pausa** y **Game Over** con opción de reinicio.
 
 ---
@@ -105,6 +106,7 @@ Después abre `http://localhost:8000` en el navegador.
 | `↑` o `X` | Rotar la pieza en sentido horario |
 | `↓`       | Soft drop (bajar más rápido)      |
 | `Espacio` | Hard drop (caída instantánea)     |
+| `C` / `Shift` | Reservar / intercambiar pieza (1 vez por pieza) |
 | `E`       | Abrir menú de habilidades (barra llena) |
 | `1`–`5`   | Elegir opción en el menú de habilidades |
 | `P`       | Pausar / reanudar                 |
