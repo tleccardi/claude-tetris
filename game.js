@@ -325,6 +325,7 @@ function clearLines(tspin, neutral) {
   if (b2b) base = Math.floor(base * B2B_MULT);
   b2bReady = difficult;
   combo++;
+  if (combo > maxCombo) maxCombo = combo;
   const mult = Math.min(combo, COMBO_MAX);
   score += base * mult + wildScore;
 
@@ -856,6 +857,7 @@ function showMenu() {
     btn.addEventListener('click', () => init(key));
     menuListEl.append(btn);
   });
+  renderRecords(hsMenuEl, null);
   menuEl.classList.remove('hidden');
 }
 
@@ -1027,6 +1029,7 @@ function endGame(didWin, title, keepPiece) {
   overlay.classList.remove('hidden');
   updateGoal();
   draw();
+  recordGameEnd();
 }
 
 function togglePause() {
@@ -1123,6 +1126,7 @@ function init(key = modeKey) {
   statusMsg = '';
   statusMs = 0;
   combo = 0;
+  resetRecordsState();
   shownCombo = 0;
   b2bReady = false;
   lastRotate = false;
@@ -1137,7 +1141,209 @@ function init(key = modeKey) {
   animId = requestAnimationFrame(loop);
 }
 
+// ---- Records ----
+const HS_KEY = 'highscores';
+const HS_NAME_KEY = 'playerName';
+const HS_MAX = 5;
+const HS_NAME_LEN = 12;
+const hsOverlayEl = document.getElementById('overlay-records');
+const hsMenuEl = document.getElementById('menu-records');
+let maxCombo = 0;          // mejor combo de la partida actual (el deshacer no lo revierte)
+let recordedThisGame = false;
+let hsMark = null;         // entrada de la partida actual (para resaltarla)
+let hsOverlayTable = null; // contenedor de la tabla dentro del overlay
+
+function loadHighscores() {
+  const data = { top: [], bestCombo: 0, maxLines: 0 };
+  try {
+    const raw = JSON.parse(localStorage.getItem(HS_KEY));
+    if (!raw || typeof raw !== 'object') return data;
+    if (Array.isArray(raw.top)) {
+      data.top = raw.top
+        .filter(e => e && Number.isFinite(e.score))
+        .map(e => ({
+          name: String(e.name ?? '').slice(0, HS_NAME_LEN) || 'Jugador',
+          score: e.score,
+          lines: Number(e.lines) || 0,
+          maxCombo: Number(e.maxCombo) || 0,
+          level: Number(e.level) || 1,
+          mode: String(e.mode ?? ''),
+          date: String(e.date ?? '')
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, HS_MAX);
+    }
+    data.bestCombo = Number(raw.bestCombo) || 0;
+    data.maxLines = Number(raw.maxLines) || 0;
+  } catch (e) {}
+  return data;
+}
+
+function saveHighscores(data) {
+  try { localStorage.setItem(HS_KEY, JSON.stringify(data)); } catch (e) {}
+}
+
+// Posición que ocuparía la puntuación (-1 si no entra en el top)
+function rankFor(data, pts) {
+  if (pts <= 0) return -1;
+  const i = data.top.findIndex(e => pts > e.score);
+  if (i >= 0) return i;
+  return data.top.length < HS_MAX ? data.top.length : -1;
+}
+
+function makeEl(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+// Dibuja tabla + mejores marcas + botón de reset. `mark` resalta una entrada ya guardada.
+function renderRecords(container, mark) {
+  const data = loadHighscores();
+  const rows = data.top;
+  container.replaceChildren();
+  container.append(makeEl('p', 'hs-title', 'RECORDS'));
+  if (!rows.length) {
+    container.append(makeEl('p', 'hs-empty', 'Aún no hay records'));
+  } else {
+    const table = makeEl('table', 'hs-table');
+    const head = table.createTHead().insertRow();
+    ['#', 'Nombre', 'Puntos', 'Líneas', 'Combo'].forEach(t => head.append(makeEl('th', '', t)));
+    const body = table.createTBody();
+    rows.forEach((e, i) => {
+      const tr = body.insertRow();
+      if (mark && e.date === mark.date) tr.className = 'hs-current';
+      [i + 1, e.name, e.score.toLocaleString(), e.lines, `x${e.maxCombo}`]
+        .forEach(v => tr.append(makeEl('td', '', String(v))));
+    });
+    container.append(table);
+  }
+  const stats = makeEl('p', 'hs-stats');
+  stats.append(
+    makeEl('span', '', `Mejor combo: x${data.bestCombo}`),
+    makeEl('span', '', `Máx. líneas: ${data.maxLines}`)
+  );
+  container.append(stats);
+  container.append(makeResetButton());
+}
+
+// Reset con doble clic ("¿Seguro?"), sin window.confirm
+function makeResetButton() {
+  const btn = makeEl('button', 'secondary-btn hs-reset', 'Resetear records');
+  btn.type = 'button';
+  let armed = false, timer = 0;
+  btn.addEventListener('click', () => {
+    if (!armed) {
+      armed = true;
+      btn.textContent = '¿Seguro?';
+      btn.classList.add('armed');
+      timer = setTimeout(() => {
+        armed = false;
+        btn.textContent = 'Resetear records';
+        btn.classList.remove('armed');
+      }, 3000);
+      btn.blur();
+      return;
+    }
+    clearTimeout(timer);
+    try { localStorage.removeItem(HS_KEY); } catch (e) {}
+    refreshRecordViews();
+  });
+  return btn;
+}
+
+function refreshRecordViews() {
+  renderRecords(hsMenuEl, null);
+  if (hsOverlayTable) renderRecords(hsOverlayTable, hsMark);
+}
+
+function resetRecordsState() {
+  maxCombo = 0;
+  recordedThisGame = false;
+  hsMark = null;
+  hsOverlayTable = null;
+  hsOverlayEl.replaceChildren();
+  hsOverlayEl.classList.add('hidden');
+}
+
+// Al terminar la partida (victoria o derrota): actualiza marcas y ofrece guardar el nombre
+function recordGameEnd() {
+  if (recordedThisGame) return;
+  recordedThisGame = true;
+  const data = loadHighscores();
+  data.bestCombo = Math.max(data.bestCombo, maxCombo);
+  data.maxLines = Math.max(data.maxLines, lines);
+  saveHighscores(data);
+
+  hsOverlayEl.replaceChildren();
+  hsOverlayTable = makeEl('div', 'hs-box');
+  hsMark = null;
+  const rank = rankFor(data, score);
+  if (rank >= 0) {
+    // Se guarda ya con el último nombre usado (no se pierde si no se pulsa Guardar); el formulario solo lo renombra
+    let savedName = '';
+    try { savedName = localStorage.getItem(HS_NAME_KEY) || ''; } catch (e) {}
+    const entry = {
+      name: savedName.slice(0, HS_NAME_LEN) || 'Jugador',
+      score, lines, maxCombo, level, mode: modeKey, date: new Date().toISOString()
+    };
+    data.top.splice(rank, 0, entry);
+    data.top = data.top.slice(0, HS_MAX);
+    saveHighscores(data);
+    hsMark = entry;
+    hsOverlayEl.append(buildRecordForm(entry, rank));
+  }
+  hsOverlayEl.append(hsOverlayTable);
+  renderRecords(hsOverlayTable, hsMark);
+  hsOverlayEl.classList.remove('hidden');
+}
+
+function buildRecordForm(entry, rank) {
+  const form = makeEl('div', 'hs-form');
+  form.append(makeEl('p', 'hs-msg', `¡Nuevo record! Puesto #${rank + 1}`));
+  const row = makeEl('div', 'hs-form-row');
+  const input = makeEl('input', 'hs-input');
+  input.type = 'text';
+  input.maxLength = HS_NAME_LEN;
+  input.placeholder = 'Tu nombre';
+  input.value = entry.name;
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.setAttribute('aria-label', 'Nombre del jugador');
+  const save = makeEl('button', 'secondary-btn', 'Guardar');
+  save.type = 'button';
+
+  const currentName = () => input.value.trim().slice(0, HS_NAME_LEN) || 'Jugador';
+  const commit = () => {
+    const name = currentName();
+    const data = loadHighscores();
+    const row = data.top.find(e => e.date === entry.date);
+    if (row) {
+      row.name = name;
+      saveHighscores(data);
+    }
+    try { localStorage.setItem(HS_NAME_KEY, name); } catch (e) {}
+    form.replaceChildren(makeEl('p', 'hs-msg', row ? `¡Guardado, ${name}!` : 'Los records fueron reseteados'));
+    refreshRecordViews();
+  };
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+  });
+  save.addEventListener('click', commit);
+  row.append(input, save);
+  form.append(row);
+  // Pequeña demora: así las teclas aún presionadas al morir no se escriben en el campo
+  setTimeout(() => { input.focus(); input.select(); }, 400);
+  return form;
+}
+
+function isTypingTarget(t) {
+  return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+}
+
 document.addEventListener('keydown', e => {
+  if (isTypingTarget(e.target)) return; // escribir el nombre no mueve piezas
   ensureAudio();
   if (e.code === 'KeyM') { setMuted(!muted); return; }
   if (menuOpen) return;
