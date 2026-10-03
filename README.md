@@ -49,6 +49,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Modo desafío**: menú inicial con Maratón + 5 desafíos con objetivo (ver abajo). Los completados se marcan con ✓ y guardan su mejor marca (`localStorage`). Power-ups activos en todos.
 - **Habilidades cargables**: cada línea limpiada suma energía (15 por línea, barra de 100). Con la barra llena, `E` (o el botón) abre un menú y se elige una habilidad (consume toda la barra): ver las siguientes 5 piezas, cambiar la pieza actual por una de 3 del pool, ralentizar la caída 10s, o deshacer la última colocación. `Esc` vuelve atrás sin gastar energía.
 - **Hold**: `C` o `Shift` guarda la pieza actual en el slot HOLD (a la izquierda de NEXT); si ya hay una guardada, se intercambian. Solo una vez por pieza: el slot se atenúa hasta que la pieza actual se fija.
+- **Skins**: selector SKIN en el panel lateral con 4 apariencias: Retro (por defecto), Neon (fondo negro y glow con `shadowBlur`), Pastel (colores suaves y esquinas redondeadas) y Pixel art (textura con dithering). Cambia al instante sin recargar, es independiente del modo claro/oscuro y se guarda en `localStorage` (`skin`). Cada skin define su paleta y su función de dibujo en `SKINS` (`game.js`).
 - **Pausa** y **Game Over** con opción de reinicio.
 
 ---

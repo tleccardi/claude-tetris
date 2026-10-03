@@ -452,3 +452,27 @@ kbd {
   grid-column: 2;
   grid-row: 1 / span 2;
 }
+
+/* ---- Skins ---- */
+#skin-select {
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Neon: tablero y paneles negros sin importar el tema claro/oscuro */
+[data-skin="neon"] #board,
+[data-skin="neon"] #next-canvas,
+[data-skin="neon"] #preview-canvas,
+[data-skin="neon"] #hold-canvas,
+[data-skin="neon"] .pick-piece {
+  background: #000;
+}
+
+[data-skin="neon"] #board {
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.25);
+}
