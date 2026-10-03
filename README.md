@@ -49,7 +49,8 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Modo desafío**: menú inicial con Maratón + 5 desafíos con objetivo (ver abajo). Los completados se marcan con ✓ y guardan su mejor marca (`localStorage`). Power-ups activos en todos.
 - **Habilidades cargables**: cada línea limpiada suma energía (15 por línea, barra de 100). Con la barra llena, `E` (o el botón) abre un menú y se elige una habilidad (consume toda la barra): ver las siguientes 5 piezas, cambiar la pieza actual por una de 3 del pool, ralentizar la caída 10s, o deshacer la última colocación. `Esc` vuelve atrás sin gastar energía.
 - **Hold**: `C` o `Shift` guarda la pieza actual en el slot HOLD (a la izquierda de NEXT); si ya hay una guardada, se intercambian. Solo una vez por pieza: el slot se atenúa hasta que la pieza actual se fija.
-- **Pausa** y **Game Over** con opción de reinicio.
+- **Menú de pausa** (`P` o `Esc`): **Reanudar**, **Reiniciar** (sin recargar), **Ver controles** y **Nivel inicial** (1–10, se guarda en `localStorage` y aplica a la próxima partida; en desafíos rige el mayor entre ese y el del desafío). Mientras está abierto el juego ignora el teclado, y tras reanudar descarta las teclas que seguían apretadas. Navegación con `↑` `↓` + `Enter` (`←` `→` cambian el nivel).
+- **Game Over** con opción de reinicio.
 
 ---
 
@@ -63,7 +64,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 | Invisible  | Las piezas se desvanecen al fijarse (se revela al final) | 20 líneas                          |
 | Al revés   | Empieza en nivel 5; desde el 6, `↑` rota antihorario y `←`/`→` se invierten | 30 líneas |
 
-Los desafíos viven en `CHALLENGES` (`game.js`); `STONE` es el bloque gris. El botón **Menú** del overlay (pausa / fin) vuelve a la selección.
+Los desafíos viven en `CHALLENGES` (`game.js`); `STONE` es el bloque gris. El botón **Menú** del overlay de fin vuelve a la selección.
 
 ---
 
@@ -109,7 +110,8 @@ Después abre `http://localhost:8000` en el navegador.
 | `C` / `Shift` | Reservar / intercambiar pieza (1 vez por pieza) |
 | `E`       | Abrir menú de habilidades (barra llena) |
 | `1`–`5`   | Elegir opción en el menú de habilidades |
-| `P`       | Pausar / reanudar                 |
+| `P` / `Esc` | Pausar / reanudar (menú de pausa) |
+| `↑` / `↓` + `Enter` | Navegar el menú de pausa |
 | `M`       | Silenciar / activar sonido        |
 
 ---
@@ -124,7 +126,7 @@ Define la estructura visual:
 
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
 - Un panel lateral con `SCORE`, `LINES`, `LEVEL`, vista de la siguiente pieza y la lista de controles.
-- Un overlay para los estados **PAUSA** y **GAME OVER**.
+- Un overlay para **GAME OVER** y un menú de pausa propio (`#pause-menu`).
 
 ### 2. `style.css`
 
