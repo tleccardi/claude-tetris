@@ -26,6 +26,11 @@ const PIECES = [
   [[0,0,7],[7,7,7],[0,0,0]],                  // L
 ];
 
+const THEMES = {
+  dark:  { grid: '#22222e', highlight: 'rgba(255,255,255,0.12)' },
+  light: { grid: '#e1e3ee', highlight: 'rgba(255,255,255,0.35)' },
+};
+
 const LINE_SCORES = [0, 100, 300, 500, 800];
 
 const canvas = document.getElementById('board');
@@ -39,7 +44,9 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const themeToggle = document.getElementById('theme-toggle');
 
+let currentTheme = 'dark';
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
 function createBoard() {
@@ -163,13 +170,13 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
   // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
+  context.fillStyle = THEMES[currentTheme].highlight;
   context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
   context.globalAlpha = 1;
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = THEMES[currentTheme].grid;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -300,5 +307,29 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+function setTheme(name, persist = true) {
+  currentTheme = name === 'light' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = currentTheme;
+  const isLight = currentTheme === 'light';
+  themeToggle.setAttribute('aria-checked', String(isLight));
+  themeToggle.setAttribute('aria-label', isLight ? 'Modo oscuro' : 'Modo claro');
+  themeToggle.textContent = isLight ? '☾' : '☀';
+  if (persist) {
+    try { localStorage.setItem('theme', currentTheme); } catch (e) {}
+  }
+  // Redibuja para reflejar el tema aunque el juego esté en pausa o terminado
+  if (board && current) draw();
+  if (next) drawNext();
+}
+
+themeToggle.addEventListener('click', () => {
+  setTheme(currentTheme === 'light' ? 'dark' : 'light');
+  themeToggle.blur();
+});
+
+let savedTheme = null;
+try { savedTheme = localStorage.getItem('theme'); } catch (e) {}
+setTheme(savedTheme, false);
 
 init();
