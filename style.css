@@ -395,3 +395,51 @@ kbd {
   color: var(--muted);
   grid-column: 1 / -1;
 }
+
+/* ---- Habilidades ---- */
+.energy {
+  height: 10px;
+  background: var(--board-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+#energy-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.25s;
+}
+
+#energy-fill.full {
+  background: var(--success);
+  animation: energy-glow 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes energy-glow {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+
+#skill-btn {
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+#skill-btn:disabled, .menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#preview-canvas, #hold-canvas, .pick-piece {
+  display: block;
+  border: 1px solid var(--border);
+  background: var(--board-bg);
+  border-radius: 4px;
+}
+
+.pick-piece {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}

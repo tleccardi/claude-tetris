@@ -49,6 +49,22 @@
           <canvas id="next-canvas" width="120" height="120"></canvas>
         </div>
 
+        <div id="preview-section" class="panel-section hidden">
+          <span class="label">PRÓXIMAS</span>
+          <canvas id="preview-canvas" width="120" height="80"></canvas>
+        </div>
+
+        <div id="hold-section" class="panel-section hidden">
+          <span class="label">HOLD</span>
+          <canvas id="hold-canvas" width="80" height="80"></canvas>
+        </div>
+
+        <div class="panel-section">
+          <span class="label">ENERGÍA</span>
+          <div class="energy"><div id="energy-fill"></div></div>
+          <button id="skill-btn" class="secondary-btn" type="button" disabled>Habilidad [E]</button>
+        </div>
+
         <div class="panel-section powers">
           <span class="label">POWER</span>
           <span id="power-status"></span>
@@ -68,6 +84,7 @@
             <li><kbd>↑</kbd> rotar</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
+            <li><kbd>E</kbd> habilidad</li>
             <li><kbd>P</kbd> pausa</li>
             <li><kbd>M</kbd> sonido</li>
           </ul>
@@ -81,6 +98,14 @@
         <p id="overlay-score"></p>
         <button id="restart-btn">Reiniciar</button>
         <button id="menu-btn" class="secondary-btn" type="button">Menú</button>
+      </div>
+    </div>
+
+    <div id="picker" class="overlay hidden">
+      <div class="overlay-box menu-box">
+        <p id="picker-title" class="menu-title"></p>
+        <div id="picker-list" class="menu-list"></div>
+        <p class="menu-desc">Teclas 1-5 · Esc / E para volver</p>
       </div>
     </div>
 
