@@ -119,6 +119,34 @@ body {
   border-radius: 4px;
 }
 
+/* ---- Power-ups ---- */
+#power-status {
+  min-height: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.powers ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.powers li {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.powers .pw {
+  width: 16px;
+  text-align: center;
+}
+
 /* ---- Controles ---- */
 .controls ul {
   list-style: none;
