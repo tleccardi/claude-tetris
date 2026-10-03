@@ -49,6 +49,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Modo desafío**: menú inicial con Maratón + 5 desafíos con objetivo (ver abajo). Los completados se marcan con ✓ y guardan su mejor marca (`localStorage`). Power-ups activos en todos.
 - **Habilidades cargables**: cada línea limpiada suma energía (15 por línea, barra de 100). Con la barra llena, `E` (o el botón) abre un menú y se elige una habilidad (consume toda la barra): ver las siguientes 5 piezas, cambiar la pieza actual por una de 3 del pool, ralentizar la caída 10s, o deshacer la última colocación. `Esc` vuelve atrás sin gastar energía.
 - **Hold**: `C` o `Shift` guarda la pieza actual en el slot HOLD (a la izquierda de NEXT); si ya hay una guardada, se intercambian. Solo una vez por pieza: el slot se atenúa hasta que la pieza actual se fija.
+- **Tabla de records local**: top 5 guardado en `localStorage` (`highscores`) con nombre, puntos, líneas y mejor combo de cada partida. Al terminar (victoria o derrota) y entrar en el top aparece un campo para el nombre (`Enter` o **Guardar**); la tabla se ve en la pantalla de inicio y en el game over, con la fila actual resaltada, más el mejor combo y las líneas máximas. El botón **Resetear records** pide confirmación (clic dos veces).
 - **Pausa** y **Game Over** con opción de reinicio.
 
 ---
