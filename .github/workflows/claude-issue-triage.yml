@@ -70,7 +70,13 @@ jobs:
             - Opcional: needs-info (si el issue es ambiguo o incompleto)
 
             SALIDA 2: .triage/comment.md
-            Markdown en espanol, sin el marcador ni footer (los agrega el workflow). Secciones:
+            Markdown en espanol, sin el marcador ni footer (los agrega el workflow).
+            FORMATO: el contenido se publica como comentario de GitHub, asi que debe ser GitHub Flavored Markdown valido:
+            - Usa encabezados `##`, listas con `-` o `1.`, tablas con `|`, y checklists `- [ ]` para los criterios de aceptacion.
+            - Codigo inline con backticks y bloques con triple backtick indicando el lenguaje (```js, ```css, ```html).
+            - Referencia archivos y funciones con backticks (ej. `game.js`, `collide`).
+            - NO uses HTML crudo, ni envuelvas todo el comentario en un bloque de codigo, ni agregues front matter.
+            Secciones:
             ## Resumen
             ## Clasificacion
             (tipo, area, prioridad + justificacion breve)
