@@ -49,6 +49,12 @@ const THEMES = {
 };
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
+const TSPIN_SCORES = [400, 800, 1200, 1600];
+const PC_SCORES = [0, 800, 1200, 1800, 2000];
+const B2B_MULT = 1.5;
+const COMBO_MAX = 10;
+const POPUP_MS = 1200;
+const TSPIN_NAMES = ['T-SPIN', 'T-SPIN SINGLE', 'T-SPIN DOUBLE', 'T-SPIN TRIPLE'];
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -63,10 +69,16 @@ const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeToggle = document.getElementById('theme-toggle');
 const powerStatusEl = document.getElementById('power-status');
+const comboEl = document.getElementById('combo');
+const b2bEl = document.getElementById('b2b');
+const soundToggle = document.getElementById('sound-toggle');
 
 let currentTheme = 'dark';
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let pendingPowerups, freezeMs, statusMsg, statusMs;
+let combo, b2bReady, lastRotate, popups, shownCombo;
+let muted = false;
+let audioCtx = null;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -126,6 +138,7 @@ function tryRotate() {
     if (!collide(rotated, current.x + kick, current.y)) {
       current.shape = rotated;
       current.x += kick;
+      lastRotate = true;
       return;
     }
   }
@@ -168,26 +181,156 @@ function explodeWilds() {
   return n;
 }
 
-function clearLines() {
-  let cleared = 0;
+// T-spin: pieza T, último movimiento fue una rotación y >=3 esquinas del centro ocupadas
+function isTSpin() {
+  if (current.power || current.type !== 3 || !lastRotate) return false;
+  const cx = current.x + 1, cy = current.y + 1;
+  let filled = 0;
+  for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const x = cx + dx, y = cy + dy;
+    if (x < 0 || x >= COLS || y >= ROWS || (y >= 0 && board[y][x])) filled++;
+  }
+  return filled >= 3;
+}
+
+function comboColor(c) {
+  return c >= 8 ? '#ff5252' : c >= 5 ? '#ff9800' : c >= 3 ? '#ffd54f' : '#7aa2f7';
+}
+
+function clearLines(tspin, neutral) {
+  let cleared = 0, first = 0, lineScore = 0, wildScore = 0;
   let n;
   while ((n = clearFullRows()) > 0) {
+    if (!cleared) first = n;
     cleared += n;
-    score += (LINE_SCORES[Math.min(n, 4)] || 0) * level;
+    lineScore += LINE_SCORES[Math.min(n, 4)] || 0;
     const wilds = explodeWilds();
     if (wilds) {
-      score += wilds * 50 * level;
+      wildScore += wilds * 50 * level;
       compactBoard();
       setStatus(`★ Comodines x${wilds}`);
     }
   }
-  if (cleared) {
-    const prevLines = lines;
-    lines += cleared;
-    pendingPowerups += Math.floor(lines / POWERUP_EVERY) - Math.floor(prevLines / POWERUP_EVERY);
-    level = Math.floor(lines / 10) + 1;
-    dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+
+  if (!cleared) {
+    if (tspin) {
+      score += TSPIN_SCORES[0] * level;
+      addPopup(TSPIN_NAMES[0], '#ba68c8', 22);
+      sfx.tspin();
+      shake();
+    }
+    if (!neutral) combo = 0;
     updateHUD();
+    return;
+  }
+
+  const difficult = tspin || first >= 4;
+  if (tspin) lineScore += TSPIN_SCORES[Math.min(first, 3)] - (LINE_SCORES[Math.min(first, 4)] || 0);
+  let base = lineScore * level;
+  const b2b = difficult && b2bReady;
+  if (b2b) base = Math.floor(base * B2B_MULT);
+  b2bReady = difficult;
+  combo++;
+  const mult = Math.min(combo, COMBO_MAX);
+  score += base * mult + wildScore;
+
+  const perfect = board.every(row => row.every(v => !v));
+  if (perfect) score += PC_SCORES[Math.min(cleared, 4)] * level;
+
+  const prevLines = lines;
+  lines += cleared;
+  pendingPowerups += Math.floor(lines / POWERUP_EVERY) - Math.floor(prevLines / POWERUP_EVERY);
+  level = Math.floor(lines / 10) + 1;
+  dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+
+  // Efectos
+  const name = tspin ? TSPIN_NAMES[Math.min(first, 3)] : first >= 4 ? 'TETRIS' : '';
+  if (name) addPopup((b2b ? 'B2B ' : '') + name, tspin ? '#ba68c8' : '#4dd0e1', 22);
+  if (combo >= 2) addPopup(`COMBO x${mult}`, comboColor(combo), 18 + Math.min(combo, 8));
+  if (perfect) addPopup('PERFECT CLEAR!', '#fff176', 24);
+  sfx.clear(first);
+  if (tspin) sfx.tspin();
+  if (b2b) sfx.b2b();
+  if (combo >= 2) sfx.combo(combo);
+  if (perfect) sfx.perfect();
+  if (difficult || perfect) shake();
+  updateHUD();
+}
+
+// ---- Popups y shake ----
+function addPopup(text, color, size) {
+  popups.push({ text, color, size, age: 0 });
+}
+
+function shake() {
+  canvas.classList.remove('shake');
+  void canvas.offsetWidth;
+  canvas.classList.add('shake');
+}
+
+// ---- Sonido (WebAudio sintetizado) ----
+function tone(freq, durMs, type = 'sine', delayMs = 0, vol = 0.12) {
+  if (muted || !audioCtx) return;
+  const t0 = audioCtx.currentTime + delayMs / 1000;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + durMs / 1000);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0);
+  osc.stop(t0 + durMs / 1000 + 0.02);
+}
+
+const sfx = {
+  clear(n) {
+    const f = [330, 392, 440, 523, 659][Math.min(n, 4)];
+    tone(f, 140, 'triangle');
+  },
+  combo(c) {
+    tone(440 * Math.pow(2, Math.min(c, 12) / 12), 160, 'square', 80, 0.08);
+  },
+  tspin() {
+    if (muted || !audioCtx) return;
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(200, t0);
+    osc.frequency.exponentialRampToValueAtTime(800, t0 + 0.25);
+    gain.gain.setValueAtTime(0.08, t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.32);
+  },
+  b2b() {
+    tone(587, 120, 'sawtooth', 120, 0.07);
+    tone(880, 180, 'sawtooth', 240, 0.07);
+  },
+  perfect() {
+    [523, 659, 784, 1047].forEach((f, i) => tone(f, 220, 'triangle', 150 + i * 90, 0.12));
+  },
+};
+
+function ensureAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try { audioCtx = new AC(); } catch (e) { return; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function setMuted(value, persist = true) {
+  muted = !!value;
+  soundToggle.setAttribute('aria-checked', String(!muted));
+  soundToggle.setAttribute('aria-label', muted ? 'Activar sonido' : 'Silenciar');
+  soundToggle.textContent = muted ? '🔇' : '🔊';
+  if (persist) {
+    try { localStorage.setItem('muted', muted ? '1' : '0'); } catch (e) {}
   }
 }
 
@@ -250,6 +393,7 @@ function ghostY() {
 function hardDrop() {
   const gy = ghostY();
   score += (gy - current.y) * 2;
+  if (gy > current.y) lastRotate = false;
   current.y = gy;
   lockPiece();
 }
@@ -257,6 +401,7 @@ function hardDrop() {
 function softDrop() {
   if (!collide(current.shape, current.x, current.y + 1)) {
     current.y++;
+    lastRotate = false;
     score += 1;
     updateHUD();
   } else {
@@ -265,13 +410,18 @@ function softDrop() {
 }
 
 function lockPiece() {
+  let tspin = false;
   if (current.power) applyPowerup(current);
-  else merge();
-  clearLines();
+  else {
+    tspin = isTSpin();
+    merge();
+  }
+  clearLines(tspin, !!current.power);
   spawn();
 }
 
 function spawn() {
+  lastRotate = false;
   current = next;
   next = pendingPowerups > 0 ? (pendingPowerups--, randomPowerup()) : randomPiece();
   if (collide(current.shape, current.x, current.y)) {
@@ -284,6 +434,15 @@ function updateHUD() {
   scoreEl.textContent = score.toLocaleString();
   linesEl.textContent = lines;
   levelEl.textContent = level;
+  comboEl.textContent = combo >= 2 ? `x${Math.min(combo, COMBO_MAX)}` : '–';
+  comboEl.classList.toggle('hot', combo >= 5);
+  if (combo >= 2 && combo !== shownCombo) {
+    comboEl.classList.remove('pulse');
+    void comboEl.offsetWidth;
+    comboEl.classList.add('pulse');
+  }
+  shownCombo = combo;
+  b2bEl.classList.toggle('hidden', !b2bReady);
 }
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
@@ -360,6 +519,27 @@ function draw() {
 
   // current piece
   drawPiece(ctx, current, current.x, current.y, BLOCK);
+
+  drawPopups();
+}
+
+function drawPopups() {
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  popups.forEach((p, i) => {
+    const t = p.age / POPUP_MS;
+    const fade = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
+    const y = ROWS * BLOCK * 0.4 + i * 34 - t * 40;
+    ctx.globalAlpha = Math.max(0, fade);
+    ctx.font = `800 ${p.size}px system-ui, sans-serif`;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.strokeText(p.text, canvas.width / 2, y);
+    ctx.fillStyle = p.color;
+    ctx.fillText(p.text, canvas.width / 2, y);
+  });
+  ctx.globalAlpha = 1;
 }
 
 function drawNext() {
@@ -399,11 +579,13 @@ function loop(ts) {
   if (freezeMs > 0) freezeMs = Math.max(0, freezeMs - dt);
   else dropAccum += dt;
   if (statusMs > 0) statusMs = Math.max(0, statusMs - dt);
+  if (popups.length) popups = popups.filter(p => (p.age += dt) < POPUP_MS);
   renderStatus();
   if (dropAccum >= dropInterval) {
     dropAccum = 0;
     if (!collide(current.shape, current.x, current.y + 1)) {
       current.y++;
+      lastRotate = false;
     } else {
       lockPiece();
     }
@@ -426,6 +608,11 @@ function init() {
   freezeMs = 0;
   statusMsg = '';
   statusMs = 0;
+  combo = 0;
+  shownCombo = 0;
+  b2bReady = false;
+  lastRotate = false;
+  popups = [];
   renderStatus();
   lastTime = performance.now();
   next = randomPiece();
@@ -437,14 +624,16 @@ function init() {
 }
 
 document.addEventListener('keydown', e => {
+  ensureAudio();
+  if (e.code === 'KeyM') { setMuted(!muted); return; }
   if (e.code === 'KeyP') { togglePause(); return; }
   if (paused || gameOver) return;
   switch (e.code) {
     case 'ArrowLeft':
-      if (!collide(current.shape, current.x - 1, current.y)) current.x--;
+      if (!collide(current.shape, current.x - 1, current.y)) { current.x--; lastRotate = false; }
       break;
     case 'ArrowRight':
-      if (!collide(current.shape, current.x + 1, current.y)) current.x++;
+      if (!collide(current.shape, current.x + 1, current.y)) { current.x++; lastRotate = false; }
       break;
     case 'ArrowDown':
       softDrop();
@@ -483,8 +672,18 @@ themeToggle.addEventListener('click', () => {
   themeToggle.blur();
 });
 
-let savedTheme = null;
-try { savedTheme = localStorage.getItem('theme'); } catch (e) {}
+soundToggle.addEventListener('click', () => {
+  ensureAudio();
+  setMuted(!muted);
+  soundToggle.blur();
+});
+
+let savedTheme = null, savedMuted = null;
+try {
+  savedTheme = localStorage.getItem('theme');
+  savedMuted = localStorage.getItem('muted');
+} catch (e) {}
 setTheme(savedTheme, false);
+setMuted(savedMuted === '1', false);
 
 init();

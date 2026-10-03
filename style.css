@@ -228,8 +228,52 @@ kbd {
   background: var(--accent-hover);
 }
 
-/* ---- Toggle de tema ---- */
-#theme-toggle {
+/* ---- Combo ---- */
+#combo {
+  display: inline-block;
+  transform-origin: left center;
+}
+
+#combo.hot {
+  color: var(--danger);
+}
+
+#combo.pulse {
+  animation: combo-pulse 0.3s ease-out;
+}
+
+#b2b {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--btn-text);
+  letter-spacing: 1px;
+}
+
+.hidden {
+  display: none;
+}
+
+#board.shake {
+  animation: board-shake 0.25s ease-out;
+}
+
+@keyframes combo-pulse {
+  0%   { transform: scale(1.6); }
+  100% { transform: scale(1); }
+}
+
+@keyframes board-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-4px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  60% { transform: translate(-3px, -1px); }
+  80% { transform: translate(2px, 1px); }
+}
+
+/* ---- Toggles de tema y sonido ---- */
+#theme-toggle, #sound-toggle {
   position: fixed;
   top: 16px;
   right: 16px;
@@ -245,11 +289,15 @@ kbd {
   transition: background 0.2s, border-color 0.2s;
 }
 
-#theme-toggle:hover {
+#sound-toggle {
+  right: 64px;
+}
+
+#theme-toggle:hover, #sound-toggle:hover {
   border-color: var(--accent);
 }
 
-#theme-toggle:focus-visible {
+#theme-toggle:focus-visible, #sound-toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

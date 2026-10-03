@@ -40,6 +40,11 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - **Pieza fantasma** (_ghost piece_): muestra dónde aterrizará la pieza actual.
 - **Vista previa** de la siguiente pieza.
 - **Sistema de puntuación** clásico de Tetris (100 / 300 / 500 / 800 multiplicado por nivel).
+- **Combo**: limpiar líneas en locks consecutivos multiplica el puntaje (x2, x3… tope x10). Un lock sin líneas lo reinicia (los power-ups no lo rompen).
+- **T-spin**: rotar una T en un hueco con ≥3 esquinas ocupadas da bonus (400 / 800 / 1200 / 1600 × nivel).
+- **Back-to-Back**: Tetris o T-spin con líneas seguidos (sin clears "fáciles" en medio) suman x1.5.
+- **Perfect Clear**: dejar el tablero vacío da un bonus extra (800–2000 × nivel).
+- **Efectos**: popups sobre el tablero, shake, contador de combo en el HUD y sonidos sintetizados con WebAudio (tecla `M` o botón 🔊 para silenciar; se recuerda entre sesiones).
 - **Niveles** que aumentan cada 10 líneas y aceleran la caída.
 - **Pausa** y **Game Over** con opción de reinicio.
 
@@ -85,6 +90,7 @@ Después abre `http://localhost:8000` en el navegador.
 | `↓`       | Soft drop (bajar más rápido)      |
 | `Espacio` | Hard drop (caída instantánea)     |
 | `P`       | Pausar / reanudar                 |
+| `M`       | Silenciar / activar sonido        |
 
 ---
 
@@ -176,6 +182,10 @@ Algunos parámetros fáciles de tunear en `game.js`:
 | `COLORS`       | Paleta de colores por tipo de pieza      | 7 colores             |
 | `LINE_SCORES`  | Puntos por 1, 2, 3 o 4 líneas eliminadas | `[0,100,300,500,800]` |
 | `dropInterval` | Velocidad inicial de caída en ms         | `1000`                |
+| `TSPIN_SCORES` | Puntos por T-spin con 0–3 líneas         | `[400,800,1200,1600]` |
+| `PC_SCORES`    | Bonus de Perfect Clear por líneas        | `[0,800,1200,1800,2000]` |
+| `B2B_MULT`     | Multiplicador Back-to-Back               | `1.5`                 |
+| `COMBO_MAX`    | Tope del multiplicador de combo          | `10`                  |
 
 > Si cambias `COLS`, `ROWS` o `BLOCK`, recuerda ajustar también `width` y `height` del `<canvas id="board">` en `index.html` para que coincida (`COLS × BLOCK` × `ROWS × BLOCK`).
 

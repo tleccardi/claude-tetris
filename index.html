@@ -13,6 +13,7 @@
 </head>
 <body>
   <button id="theme-toggle" type="button" role="switch" aria-checked="false" aria-label="Modo claro">☀</button>
+  <button id="sound-toggle" type="button" role="switch" aria-checked="true" aria-label="Silenciar">🔊</button>
   <h1 class="title">TETRIS</h1>
   <div class="wrapper">
     <div class="game-container">
@@ -30,6 +31,11 @@
         <div class="panel-section">
           <span class="label">LEVEL</span>
           <span class="value" id="level">1</span>
+        </div>
+
+        <div class="panel-section">
+          <span class="label">COMBO <span id="b2b" class="hidden">B2B</span></span>
+          <span class="value" id="combo">–</span>
         </div>
 
         <div class="panel-section">
@@ -57,6 +63,7 @@
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
             <li><kbd>P</kbd> pausa</li>
+            <li><kbd>M</kbd> sonido</li>
           </ul>
         </div>
       </aside>
